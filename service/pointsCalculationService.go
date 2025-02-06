@@ -10,6 +10,56 @@ import (
 	"unicode"
 )
 
+func CreateTransaction(transaction *model.Transaction) error {
+	return repository.InsertTransaction(transaction)
+}
+
+func GetTransaction(uuid string) (*model.Points, error) {
+	var points = 0
+	var pointsModel model.Points
+	transaction, err := repository.GetTransaction(uuid)
+	if err != nil {
+		return nil, err
+	}
+
+	points += calculateAlphaNumericPoints(transaction)
+
+	quarterPoints, err := calculateMultipleOfQuarterPoints(transaction)
+	if err != nil {
+		return nil, err
+	}
+	points += quarterPoints
+
+	points += calculateItemPoints(transaction)
+
+	roundDollarPoints, err := calculateRoundDollarPoints(transaction)
+	if err != nil {
+		return nil, err
+	}
+	points += roundDollarPoints
+
+	discountPoints, err := calculateDiscountPoints(transaction)
+	if err != nil {
+		return nil, err
+	}
+	points += discountPoints
+
+	dayPoints, err := calculatePurchaseDayPoints(transaction)
+	if err != nil {
+		return nil, err
+	}
+	points += dayPoints
+
+	timePoints, err := calculatePurchaseTimePoints(transaction)
+	if err != nil {
+		return nil, err
+	}
+	points += timePoints
+
+	pointsModel.Points = points
+	return &pointsModel, nil
+}
+
 func isAlphaNumeric(s string) int {
 	var count = 0
 	for _, r := range s {
@@ -21,87 +71,79 @@ func isAlphaNumeric(s string) int {
 	return count
 }
 
-func CreateTransaction(transaction *model.Transaction) error {
-	return repository.InsertTransaction(transaction)
+func calculateAlphaNumericPoints(transaction *model.Transaction) int {
+	return isAlphaNumeric(transaction.Retailer)
 }
 
-func GetTransaction(uuid string) (*model.Points, error) {
-	var points = 0
-	var pointsModel model.Points
-	transaction, err := repository.GetTransaction(uuid)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Adding points for alphanumeric characters
-	points += isAlphaNumeric(transaction.Retailer)
-
-	// Adding points for multiple of 0.25 //should this not be considered if it has no decimal but is still a multiple of .25?
+func calculateMultipleOfQuarterPoints(transaction *model.Transaction) (int, error) {
 	total, err := strconv.ParseFloat(transaction.Total, 64)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	if math.Mod(total, 0.25) == 0 {
-		points += 25
+		return 25, nil
 	}
+	return 0, nil
+}
 
-	// Adding 5 points for every two items on the list
-	if len(transaction.Items) != 0 && len(transaction.Items)%2 == 0 {
-		points += (len(transaction.Items) / 2) * 5
+func calculateItemPoints(transaction *model.Transaction) int {
+	if len(transaction.Items) == 0 {
+		return 0
 	}
-	if len(transaction.Items) != 0 && len(transaction.Items)%2 != 0 {
-		points += ((len(transaction.Items) - 1) / 2) * 5
-	}
+	return (len(transaction.Items) / 2) * 5
+}
 
-	// Adding 50 points if the total is a round dollar amount with no cents
+func calculateRoundDollarPoints(transaction *model.Transaction) (int, error) {
+	total, err := strconv.ParseFloat(transaction.Total, 64)
+	if err != nil {
+		return 0, err
+	}
 	if math.Mod(total, 1) == 0 {
-		points += 50
+		return 50, nil
 	}
+	return 0, nil
+}
 
-	//Discount if trimmed length of items title is a multiple of 3
+func calculateDiscountPoints(transaction *model.Transaction) (int, error) {
+	points := 0
 	for _, item := range transaction.Items {
 		trimmedItem := strings.TrimSpace(item.ShortDescription)
 		if len(trimmedItem)%3 == 0 {
 			price, err := strconv.ParseFloat(item.Price, 64)
 			if err != nil {
-				return nil, err
+				return 0, err
 			}
-
-			//round up to the nearest dollar
 			discountedPoints := math.Ceil(price * 0.20)
 			points += int(discountedPoints)
 		}
-
 	}
+	return points, nil
+}
 
-	//Add points if purchase day is odd
+func calculatePurchaseDayPoints(transaction *model.Transaction) (int, error) {
 	purchaseDate := strings.Split(transaction.PurchaseDate, "-")
 	day, err := strconv.Atoi(purchaseDate[2])
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 	if day%2 != 0 {
-		points += 6
+		return 6, nil
 	}
+	return 0, nil
+}
 
-	//Add points if the time of purchase is after 2:00pm and before 4:00pm.
+func calculatePurchaseTimePoints(transaction *model.Transaction) (int, error) {
 	purchaseTime := strings.Split(transaction.PurchaseTime, ":")
 	hour, errHr := strconv.Atoi(purchaseTime[0])
 	minute, errMin := strconv.Atoi(purchaseTime[1])
 	if errHr != nil {
-		return nil, errHr
+		return 0, errHr
 	}
-
 	if errMin != nil {
-		return nil, errMin
+		return 0, errMin
 	}
-
 	if (hour >= 14 && minute >= 0) && hour < 16 {
-		points += 10
+		return 10, nil
 	}
-
-	pointsModel.Points = points
-
-	return &pointsModel, nil
+	return 0, nil
 }
