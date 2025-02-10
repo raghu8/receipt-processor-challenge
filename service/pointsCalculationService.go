@@ -60,6 +60,18 @@ func GetTransaction(uuid string) (*model.Points, error) {
 	return &pointsModel, nil
 }
 
+func GetAllTransactions() ([]*model.Transaction, error) {
+	return repository.GetAllTransactions()
+}
+
+func DeleteTransaction(uuid string) error {
+	return repository.DeleteSpecificTransaction(uuid)
+}
+
+func DeleteSpecifiedTransaction(uuid string) error {
+	return repository.DeleteSpecificTransaction(uuid)
+}
+
 func isAlphaNumeric(s string) int {
 	var count = 0
 	for _, r := range s {

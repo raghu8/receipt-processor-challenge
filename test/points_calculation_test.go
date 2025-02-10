@@ -149,3 +149,127 @@ func TestCalculatePoints(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllTransactions(t *testing.T) {
+	initMockDB()
+
+	tests := []struct {
+		name        string
+		transaction model.Transaction
+	}{
+		{
+			name: "Get all transactions",
+			transaction: model.Transaction{
+				Retailer:     "Target",
+				Uuid:         "12345",
+				PurchaseDate: "2022-01-02",
+				PurchaseTime: "13:01",
+				Items:        []model.Item{},
+				Total:        "1.01",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.CreateTransaction(&tt.transaction)
+			if err != nil {
+				t.Fatalf("CreateTransaction() error = %v", err)
+			}
+
+			transactions, err := service.GetAllTransactions()
+			if err != nil {
+				t.Fatalf("GetAllTransactions() error = %v", err)
+			}
+			if len(transactions) != 1 {
+				t.Errorf("GetAllTransactions() = %v, want %v", len(transactions), 1)
+			}
+		})
+	}
+}
+
+func TestDeleteTransaction(t *testing.T) {
+	initMockDB()
+
+	tests := []struct {
+		name        string
+		transaction model.Transaction
+	}{
+		{
+			name: "Delete transaction",
+			transaction: model.Transaction{
+				Retailer:     "Target",
+				Uuid:         "12345",
+				PurchaseDate: "2022-01-02",
+				PurchaseTime: "13:01",
+				Items:        []model.Item{},
+				Total:        "1.01",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.CreateTransaction(&tt.transaction)
+			if err != nil {
+				t.Fatalf("CreateTransaction() error = %v", err)
+			}
+
+			err = service.DeleteTransaction(tt.transaction.Uuid)
+			if err != nil {
+				t.Fatalf("DeleteTransaction() error = %v", err)
+			}
+
+			transactions, err := service.GetAllTransactions()
+			if err != nil {
+				t.Fatalf("GetAllTransactions() error = %v", err)
+			}
+			if len(transactions) != 0 {
+				t.Errorf("GetAllTransactions() = %v, want %v", len(transactions), 0)
+			}
+		})
+	}
+}
+
+func TestDeleteSpecifiedTransaction(t *testing.T) {
+	initMockDB()
+
+	tests := []struct {
+		name        string
+		transaction model.Transaction
+	}{
+		{
+			name: "Delete specified transaction",
+			transaction: model.Transaction{
+				Retailer:     "Target",
+				Uuid:         "12345",
+				PurchaseDate: "2022-01-02",
+				PurchaseTime: "13:01",
+				Items:        []model.Item{},
+				Total:        "1.01",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.CreateTransaction(&tt.transaction)
+			if err != nil {
+				t.Fatalf("CreateTransaction() error = %v", err)
+			}
+
+			err = service.DeleteSpecifiedTransaction(tt.transaction.Uuid)
+			if err != nil {
+				t.Fatalf("DeleteSpecifiedTransaction() error = %v", err)
+			}
+
+			transactions, err := service.GetAllTransactions()
+			if err != nil {
+				t.Fatalf("GetAllTransactions() error = %v", err)
+			}
+			if len(transactions) != 0 {
+				t.Errorf("GetAllTransactions() = %v, want %v", len(transactions), 0)
+			}
+		})
+	}
+}

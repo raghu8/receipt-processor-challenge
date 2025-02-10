@@ -16,6 +16,9 @@ import (
 func RegisterStudentRoutes(r *mux.Router) {
 	r.HandleFunc("/transactions", CreateTransaction).Methods("POST")
 	r.HandleFunc("/transactions/{uuid}", GetTransaction).Methods("GET")
+	r.HandleFunc("/transactions", GetAllTransactions).Methods("GET")
+	r.HandleFunc("/delete", DeleteAllTransactions).Methods("DELETE")
+	r.HandleFunc("/delete/{uuid}", DeleteSpecificTransaction).Methods("DELETE")
 	r.HandleFunc("/health", HealthCheck).Methods("GET")
 }
 
@@ -64,4 +67,37 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(transaction)
+}
+
+func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
+	transactions, err := service.GetAllTransactions()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(transactions)
+}
+
+func DeleteAllTransactions(w http.ResponseWriter, r *http.Request) {
+	err := repository.DeleteAllTransactions()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func DeleteSpecificTransaction(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	uuid := params["uuid"]
+
+	err := service.DeleteTransaction(uuid)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
