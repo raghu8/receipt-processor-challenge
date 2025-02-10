@@ -13,7 +13,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func RegisterStudentRoutes(r *mux.Router) {
+func RegisterReciptRoutes(r *mux.Router) {
 	r.HandleFunc("/transactions", CreateTransaction).Methods("POST")
 	r.HandleFunc("/transactions/{uuid}", GetTransaction).Methods("GET")
 	r.HandleFunc("/transactions", GetAllTransactions).Methods("GET")
