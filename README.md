@@ -6,6 +6,8 @@ This project has the following features
 - Add new receipts
 - Retrieve receipts by ID
 - List all receipts
+- Delete all recipts
+- Delete speciric recipt
 - In-memory database for fast access
 
 To install and run this project follow the steps below
