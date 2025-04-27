@@ -1,0 +1,8 @@
+Filetype: IR signals file
+Version: 1
+# Epson Projector Basic Remote
+Power On: NEC 1FE50AF
+Power Off: NEC 1FE40BF
+Input Source: NEC 1FEA05F
+Volume Up: NEC 1FEF807
+Volume Down: NEC 1FE7887
